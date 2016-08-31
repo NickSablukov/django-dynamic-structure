@@ -1,0 +1,2 @@
+class DynamicModelException(Exception):
+    pass

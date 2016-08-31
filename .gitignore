@@ -1,0 +1,4 @@
+*.pyc
+*/__pycache__/
+/dist/
+/dajngo_dm/migrations/
