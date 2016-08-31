@@ -1,6 +1,6 @@
 from django.db import models
 
-from django_dm.db import validators
+from dyn_struct.db import validators
 
 
 class ParamsField(models.TextField):

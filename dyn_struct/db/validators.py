@@ -16,7 +16,7 @@ class ParamsValidator(object):
 
         try:
             dict(json.loads(value))
-        except json.decoder.JSONDecodeError:
+        except json.JSONDecodeError:
             raise ValidationError(self.json_valid_error_message, code=self.code)
         except TypeError:
             raise ValidationError(self.dict_valid_error_message, code=self.code)

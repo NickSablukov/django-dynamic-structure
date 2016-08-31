@@ -1,133 +1,119 @@
 import json
-from typing import NamedTuple
 
-from django.core import exceptions
 from django.db import models
 from django import forms
-
-from django_dm import datatools
-from django_dm.db import fields
-
-from django_dm.exceptions import DynamicModelException
+from dyn_struct import datatools
+from dyn_struct.db import fields
+from dyn_struct.exceptions import CheckClassArgumentsException
 
 
-class DynamicObject(models.Model):
-    name = models.CharField(max_length=255, verbose_name='Название')
+class DynamicStructure(models.Model):
+    name = models.CharField(max_length=255, verbose_name='Название', unique=True)
 
     class Meta:
-        verbose_name = 'динамический объект'
-        verbose_name_plural = 'динамические объекты'
+        verbose_name = 'динамическая структура'
+        verbose_name_plural = 'динамические структуры'
 
     def __str__(self):
         return self.name
 
-    def build_fields(self):
-        fields_data = {}
-        for field in self.fields.all():
-            try:
-                fields_data[field.name] = field.build()
-            except Exception:
-                exceptions.DynamicModelException('Возникла ошибка в построении поля протокола под именем {}'.format(field.name))
+    def get_field_names(self):
+        return list(self.fields.values_list('name', flat=True))
 
-        return fields_data
-
-    def get_rows(self, form):
-        rows = []
-
-        rows_list = sorted(list(set(self.fields.all().values_list('row', flat=True))))
-        fields_map = {field.name: field for field in form}
-
-        for row_number in rows_list:
-            row_fields = self.fields.filter(row=row_number).order_by('position')
-            rows.append(
-                [(fields_map[field.name] if not field.header else field, field.classes) for field in row_fields]
-            )
+    def get_rows(self):
+        table = []
+        for row_number in self.fields.values_list('row', flat=True).order_by('row').distinct():
+            row = self.fields.filter(row=row_number).order_by('position')
+            table.append(row)
+        return table
 
 
-class DynamicObjectField(models.Model):
+
+class DynamicStructureField(models.Model):
     FORM_FIELD_CHOICES = [(field, field) for field in datatools.get_django_fields()]
-    WIDGETS_CHOICES = [(field, field) for field in datatools.get_django_widgets()]
+    WIDGETS_CHOICES = [(widget, widget) for widget in datatools.get_django_widgets()]
 
-    KWARGS_HELP_TEXT = '{"key": value, ... }  / Используйте только двойные скобки ( " )'
+    KWARGS_HELP_TEXT = '{"key": value, ... }  / Используйте только двойные кавычки ( " )'  # TODO: подумать об уместности
 
-    header = models.CharField(max_length=255, verbose_name='заголовок', null=True, blank=True,
-                              help_text='при заполнении этого поля, объект будет являться заголовком')
+    header = models.CharField(max_length=255, verbose_name='заголовок', blank=True,
+                              help_text='при заполнении этого поля, вместо поля формы будет выводить заголовок')
 
-    dynamic_object = models.ForeignKey(DynamicObject, verbose_name='Динамический объект', related_name='fields')
-    name = models.CharField(max_length=255, verbose_name='Название', null=True, blank=True)
+    structure = models.ForeignKey(DynamicStructure, verbose_name='Структура', related_name='fields')
+    name = models.CharField(max_length=255, verbose_name='Название', blank=True, unique=True)
 
-    form_field = models.CharField(max_length=255, choices=FORM_FIELD_CHOICES, verbose_name='Поле', null=True, blank=True) # success вынести в кclean чтоб было красиво для каждого РАЗНОГО  поля
-    form_kwargs = fields.ParamsField(verbose_name='Параметры поля', help_text=KWARGS_HELP_TEXT, blank=True, null=True)
+    form_field = models.CharField(max_length=255, choices=FORM_FIELD_CHOICES, verbose_name='Поле', blank=True)
+    form_kwargs = fields.ParamsField(verbose_name='Параметры поля', help_text=KWARGS_HELP_TEXT, default='{}')
 
-    widget = models.CharField(max_length=255, choices=WIDGETS_CHOICES, verbose_name='Виджет', null=True, blank=True)
-    widget_kwargs = fields.ParamsField(verbose_name='Параметры виджета', help_text=KWARGS_HELP_TEXT, blank=True, null=True)
+    widget = models.CharField(max_length=255, choices=WIDGETS_CHOICES, verbose_name='Виджет', blank=True)
+    widget_kwargs = fields.ParamsField(verbose_name='Параметры виджета', help_text=KWARGS_HELP_TEXT, default='{}')
 
-    row = models.PositiveIntegerField(verbose_name='Строка')
-    position = models.PositiveIntegerField(verbose_name='Позиция в строке')
-    classes = models.CharField(max_length=255, verbose_name='Классы', help_text='col-md-3, custom-class ...', null=True, blank=True)
+    row = models.PositiveSmallIntegerField(verbose_name='Строка')
+    position = models.PositiveSmallIntegerField(verbose_name='Позиция в строке')
+    classes = models.CharField(max_length=255, verbose_name='CSS-классы', help_text='col-md-3, custom-class ...',
+                               blank=True)
 
     class Meta:
-        verbose_name = 'поле динамического объекта'
-        verbose_name_plural = 'поля динамических объектов'
+        verbose_name = 'поле динамической структуры'
+        verbose_name_plural = 'поля динамических структур'
 
     def __str__(self):
-        return '{0} ({1}/{2})'.format(self.name, self.form_field, self.widget) if not self.header else 'Заголовок "{}"'.format(self.header)
-
-    def check_item_arguments(self, arguments, json_data, item_name):
-        if json_data:
-            kwargs = json.loads(json_data)
-            if arguments and kwargs.keys():
-                error_keys = list(frozenset(kwargs.keys()) - frozenset(arguments))
-                if error_keys:
-                    raise ValidationError(
-                        '{0} - неизвестные ключи для {2}. Выбирайте необходимые из {1}'.format(
-                            ', '.join(error_keys),
-                            ', '.join(arguments),
-                            item_name
-                        ), code='invalid'
-                    )
-
-    def check_field_arguments(self):
-        arguments = datatools.get_item_arguments(getattr(forms.fields, self.form_field))
-        self.check_item_arguments(arguments, self.form_kwargs, self.form_field)
-
-    def check_widget_arguments(self):
-        arguments = datatools.get_item_arguments(getattr(forms.widgets, self.widget))
-        self.check_item_arguments(arguments, self.widget_kwargs, self.widget)
+        return '{0} ({1}/{2})'.format(self.name, self.form_field,
+                                      self.widget) if not self.header else 'Заголовок "{}"'.format(self.header)
 
     def clean(self):
-
         if self.header:
-            self.name = self.form_field = self.form_kwargs = self.widget = self.widget_kwargs = None
-        elif self.name and self.form_field and self.widget:
-            try:
-                self.check_field_arguments()
-                self.check_widget_arguments()
-                self.build()
-            except Exception as e:
-                raise ValidationError('Не удалось создать поле формы ({})'.format(str(e)), code='invalid')
-        else:
-            raise ValidationError(
-                'Необходимо указать заголовок, если это заголовок, либо название, поле и виджет', code='invalid'
-            )
+            if self.name or self.form_field or self.widget:
+                raise forms.ValidationError('Если указывается заголовок, то поля '
+                                            '"Название", "Поле" и "Виджет" '
+                                            'указывать не нужно')
 
-        self.widget_kwargs = json.dumps(json.loads(self.widget_kwargs), indent=4) if self.widget_kwargs else ''
-        self.form_kwargs = json.dumps(json.loads(self.form_kwargs), indent=4) if self.form_kwargs else ''
+        else:
+            if not self.name:
+                raise forms.ValidationError('Необходимо указать название', code='invalid')
+            if not self.form_field:
+                raise forms.ValidationError('Необходимо указать поле', code='invalid')
+
+            try:
+                if self.form_kwargs:
+                    self._check_field_arguments()
+
+                if self.widget and self.widget_kwargs:
+                    self._check_widget_arguments()
+
+                self.build()
+
+            except CheckClassArgumentsException as ex:
+                forms.ValidationError(str(ex), code='invalid')
+            except Exception as ex:
+                raise forms.ValidationError('Не удалось создать поле формы ({})'.format(str(ex)), code='invalid')
+
+        self.widget_kwargs = json.dumps(json.loads(self.widget_kwargs), indent=4)
+        self.form_kwargs = json.dumps(json.loads(self.form_kwargs), indent=4)
 
     def build(self):
-        if not self.header:
-            widget = getattr(forms.widgets, self.widget)
+        assert self.form_field
+
+        field_kwargs = json.loads(self.form_kwargs) if self.form_kwargs else {}
+        if 'label' not in field_kwargs:
+            field_kwargs['label'] = self.name
+
+        if self.widget:
+            widget_class = getattr(forms.widgets, self.widget)
             widget_kwargs = json.loads(self.widget_kwargs) if self.widget_kwargs else {}
+            field_kwargs.update({'widget': widget_class(**widget_kwargs)})
 
-            field_kwargs = json.loads(self.form_kwargs) if self.form_kwargs else {}
-            field_kwargs.update({'widget': widget(**widget_kwargs)})
-            field = getattr(forms.fields, self.form_field)
+        field_class = getattr(forms.fields, self.form_field)
 
-            field_object = field(**field_kwargs)
-            field_object.classes = self.classes
-            field_object.position = self.position
-            field_object.row = self.row
+        field = field_class(**field_kwargs)
+        field.name = self.name
+        return field
 
-            return field_object
-        else:
-            return self
+    def _check_field_arguments(self):
+        field_class = getattr(forms.fields, self.form_field)
+        kwargs = json.loads(self.form_kwargs)
+        datatools.check_class_arguments(field_class, kwargs)
+
+    def _check_widget_arguments(self):
+        widget_class = getattr(forms.widgets, self.widget)
+        kwargs = json.loads(self.widget_kwargs)
+        datatools.check_class_arguments(widget_class, kwargs)

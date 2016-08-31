@@ -1,2 +1,6 @@
-class DynamicModelException(Exception):
+class DynamicStructureException(Exception):
+    pass
+
+
+class CheckClassArgumentsException(Exception):
     pass

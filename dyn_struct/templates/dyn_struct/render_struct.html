@@ -1,0 +1,19 @@
+{% load dyn_struct %}
+
+<div class="dynamic_structure">
+    {% for row in rows %}
+        <div class="row">
+            {% for field in row %}
+                <div class="{{ field.classes }}">
+                    {% if field.header %}
+                        <h4>
+                            {{ field.header }}
+                        </h4>
+                    {% else %}
+                        {% render_struct_field field prefix field.initial %}
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+</div>
