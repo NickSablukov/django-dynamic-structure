@@ -1,0 +1,15 @@
+django_dynamic_structure.egg-info/PKG-INFO
+django_dynamic_structure.egg-info/SOURCES.txt
+django_dynamic_structure.egg-info/dependency_links.txt
+django_dynamic_structure.egg-info/requires.txt
+django_dynamic_structure.egg-info/top_level.txt
+dyn_struct/__init__.py
+dyn_struct/admin.py
+dyn_struct/datatools.py
+dyn_struct/exceptions.py
+dyn_struct/forms.py
+dyn_struct/migrations/0001_initial.py
+dyn_struct/migrations/0002_auto_20160831_2238.py
+dyn_struct/migrations/__init__.py
+dyn_struct/templatetags/__init__.py
+dyn_struct/templatetags/dyn_struct.py

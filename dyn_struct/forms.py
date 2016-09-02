@@ -41,17 +41,17 @@ class DynamicField(forms.Field):
 
         fields = models.DynamicStructureField.objects.filter(structure=self.widget.dynamic_structure)
 
-        exceptions = []
+        exception_messages = []
         for name in field_names:
             field = fields.get(name=name)
             django_field = field.build()
             try:
                 django_field.clean(cleaned_data[name])
             except ValidationError as e:
-                exceptions.append(e)
+                exception_messages.append(e.message)
 
-        if exceptions:
-            raise ValidationError(*exceptions)  # TODO проверить
+        if exception_messages:
+            raise ValidationError('\n'.join(exception_messages))
 
         return json.dumps(cleaned_data, indent=4)
 

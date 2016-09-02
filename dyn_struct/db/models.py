@@ -28,12 +28,9 @@ class DynamicStructure(models.Model):
         return table
 
 
-
 class DynamicStructureField(models.Model):
     FORM_FIELD_CHOICES = [(field, field) for field in datatools.get_django_fields()]
     WIDGETS_CHOICES = [(widget, widget) for widget in datatools.get_django_widgets()]
-
-    KWARGS_HELP_TEXT = '{"key": value, ... }  / Используйте только двойные кавычки ( " )'  # TODO: подумать об уместности
 
     header = models.CharField(max_length=255, verbose_name='заголовок', blank=True,
                               help_text='при заполнении этого поля, вместо поля формы будет выводить заголовок')
@@ -42,10 +39,10 @@ class DynamicStructureField(models.Model):
     name = models.CharField(max_length=255, verbose_name='Название', blank=True, unique=True)
 
     form_field = models.CharField(max_length=255, choices=FORM_FIELD_CHOICES, verbose_name='Поле', blank=True)
-    form_kwargs = fields.ParamsField(verbose_name='Параметры поля', help_text=KWARGS_HELP_TEXT, default='{}')
+    form_kwargs = fields.ParamsField(verbose_name='Параметры поля', default='{}')
 
     widget = models.CharField(max_length=255, choices=WIDGETS_CHOICES, verbose_name='Виджет', blank=True)
-    widget_kwargs = fields.ParamsField(verbose_name='Параметры виджета', help_text=KWARGS_HELP_TEXT, default='{}')
+    widget_kwargs = fields.ParamsField(verbose_name='Параметры виджета', default='{}')
 
     row = models.PositiveSmallIntegerField(verbose_name='Строка')
     position = models.PositiveSmallIntegerField(verbose_name='Позиция в строке')
