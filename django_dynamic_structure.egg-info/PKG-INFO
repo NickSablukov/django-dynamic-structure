@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: django-dynamic-structure
+Version: 0.0.1
+Summary: Dynamical django model structure. For example, for user customized medical specialist protocols.
+Home-page: https://github.com/NickSablukov/django-dynamic-structure
+Author: Nick Sablukov
+Author-email: dessanndes@gmailcom
+License: The MIT License
+Description: UNKNOWN
+Platform: UNKNOWN

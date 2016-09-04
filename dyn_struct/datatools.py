@@ -14,7 +14,10 @@ def get_django_widgets():
 
 
 def check_class_arguments(class_obj, kwargs):
-    # TODO: сделать рекурсивный просмотр всех предков
+
+
+
+
     available_arg_names = set(list(signature(class_obj).parameters.keys()))
     kwargs_names = set(kwargs.keys())
 
