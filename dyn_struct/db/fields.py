@@ -7,7 +7,7 @@ class ParamsField(models.TextField):
 
     @property
     def validators(self):
-        field_validators = super().validators
+        field_validators = super(ParamsField, self).validators
         field_validators.extend([
             validators.ParamsValidator()
         ])

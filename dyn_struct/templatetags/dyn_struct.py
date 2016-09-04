@@ -1,3 +1,4 @@
+import six
 import json
 
 from django import template
@@ -7,7 +8,7 @@ register = template.Library()
 
 @register.inclusion_tag('dyn_struct/render_struct.html')
 def render_struct(structure_obj, prefix, value=None):
-    if value and isinstance(value, str):
+    if value and isinstance(value, basestring):
         value = json.loads(value)
 
     rows = structure_obj.get_rows()
@@ -26,7 +27,7 @@ def render_struct(structure_obj, prefix, value=None):
 
 @register.inclusion_tag('dyn_struct/render_struct_field.html')
 def render_struct_field(struct_field, prefix, value=None):
-    field_name = '{0}_{1}'.format(prefix, struct_field.name)
+    field_name = six.u(prefix) + '_' + struct_field.name
 
     form_field = struct_field.build()
     rendered_input = form_field.widget.render(

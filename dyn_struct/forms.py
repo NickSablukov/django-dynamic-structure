@@ -1,3 +1,4 @@
+import six
 import json
 
 from django import forms
@@ -26,7 +27,7 @@ class DynamicWidget(forms.Widget):
 
     def value_from_datadict(self, data, files, name):
         dynamic_names = self.dynamic_structure.get_field_names()
-        value = {dynamic_name: data.get('{0}_{1}'.format(name, dynamic_name), None)
+        value = {dynamic_name: data.get(six.u(name) + '_' + dynamic_name, None)
                  for dynamic_name in dynamic_names if dynamic_name}
         return value
 
@@ -36,7 +37,7 @@ class DynamicField(forms.Field):
 
     def clean(self, data, initial=None):
         json_data = json.dumps(data)
-        cleaned_data = json.loads(super().clean(json_data))
+        cleaned_data = json.loads(super(DynamicField, self).clean(json_data))
         field_names = cleaned_data.keys()
 
         fields = models.DynamicStructureField.objects.filter(structure=self.widget.dynamic_structure)
@@ -57,7 +58,7 @@ class DynamicField(forms.Field):
 
 
 class DynamicStructureForm(forms.ModelForm):
-    data = DynamicField()
+    data = DynamicField(label='')
 
     def __init__(self, *args, **kwargs):
         dynamic_structure = kwargs.pop('dynamic_structure')

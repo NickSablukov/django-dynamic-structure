@@ -18,6 +18,9 @@ class DynamicStructure(models.Model):
     def __str__(self):
         return self.name
 
+    def __unicode__(self):
+        return self.name
+
     def get_field_names(self):
         return list(self.fields.values_list('name', flat=True))
 
@@ -55,8 +58,16 @@ class DynamicStructureField(models.Model):
         verbose_name_plural = 'поля динамических структур'
 
     def __str__(self):
-        return '{0} ({1}/{2})'.format(self.name, self.form_field,
-                                      self.widget) if not self.header else 'Заголовок "{}"'.format(self.header)
+        if self.header:
+            return self.header
+        else:
+            return self.name
+
+    def __unicode__(self):
+        if self.header:
+            return self.header
+        else:
+            return self.name
 
     def clean(self):
         if self.header:
