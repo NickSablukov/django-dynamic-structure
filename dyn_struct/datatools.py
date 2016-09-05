@@ -29,7 +29,9 @@ def get_all_bases_classes(class_obj, base_classes=None):
 def check_class_arguments(cls, kwargs):
     classes = get_all_bases_classes(cls)
 
-    classes_params = [class_obj.__init__.__code__.co_varnames for class_obj in classes]
+    classes_params = []
+    for class_obj in classes:
+        classes_params.extend(class_obj.__init__.__code__.co_varnames)
     available_arg_names = set([param for param in classes_params if param not in ['args', 'kwargs', 'self']])
 
     kwargs_names = set(kwargs.keys())
@@ -40,6 +42,6 @@ def check_class_arguments(cls, kwargs):
             '{0} - неизвестные ключи для {2}. Выбирайте необходимые из {1}'.format(
                 ', '.join(error_keys),
                 ', '.join(available_arg_names),
-                class_obj
+                cls
             )
         )

@@ -83,10 +83,10 @@ class DynamicStructureField(models.Model):
                 raise forms.ValidationError('Необходимо указать поле', code='invalid')
 
             try:
-                if self.form_kwargs:
+                if self.form_kwargs and self.form_kwargs != '{}':
                     self._check_field_arguments()
 
-                if self.widget and self.widget_kwargs:
+                if self.widget and self.widget_kwargs and self.widget_kwargs != '{}':
                     self._check_widget_arguments()
 
                 self.build()
