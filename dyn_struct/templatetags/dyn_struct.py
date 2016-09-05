@@ -8,7 +8,7 @@ register = template.Library()
 
 @register.inclusion_tag('dyn_struct/render_struct.html')
 def render_struct(structure_obj, prefix, value=None):
-    if value and isinstance(value, basestring):
+    if value and isinstance(value, six.string_types):
         value = json.loads(value)
 
     rows = structure_obj.get_rows()
