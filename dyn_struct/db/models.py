@@ -36,11 +36,11 @@ class DynamicStructureField(models.Model):
     FORM_FIELD_CHOICES = [(field, field) for field in datatools.get_django_fields()]
     WIDGETS_CHOICES = [(widget, widget) for widget in datatools.get_django_widgets()]
 
-    header = models.CharField(max_length=255, verbose_name='заголовок', blank=True,
+    header = models.CharField(max_length=100, verbose_name='заголовок', blank=True,
                               help_text='при заполнении этого поля, вместо поля формы будет выводить заголовок')
 
     structure = models.ForeignKey(DynamicStructure, verbose_name='Структура', related_name='fields')
-    name = models.CharField(max_length=255, verbose_name='Название', blank=True, unique=True)
+    name = models.CharField(max_length=100, verbose_name='Название', blank=True)
 
     form_field = models.CharField(max_length=255, choices=FORM_FIELD_CHOICES, verbose_name='Поле', blank=True)
     form_kwargs = fields.ParamsField(verbose_name='Параметры поля', default='{}')
@@ -56,6 +56,8 @@ class DynamicStructureField(models.Model):
     class Meta:
         verbose_name = 'поле динамической структуры'
         verbose_name_plural = 'поля динамических структур'
+        unique_together = ('name', 'header')
+        ordering = ('row', 'position')
 
     def __str__(self):
         if self.header:
@@ -96,8 +98,8 @@ class DynamicStructureField(models.Model):
             except Exception as ex:
                 raise forms.ValidationError('Не удалось создать поле формы ({})'.format(str(ex)), code='invalid')
 
-        self.widget_kwargs = json.dumps(json.loads(self.widget_kwargs), indent=4)
-        self.form_kwargs = json.dumps(json.loads(self.form_kwargs), indent=4)
+        self.widget_kwargs = json.dumps(json.loads(self.widget_kwargs), indent=4, ensure_ascii=False)
+        self.form_kwargs = json.dumps(json.loads(self.form_kwargs), indent=4, ensure_ascii=False)
 
     def build(self):
         assert self.form_field

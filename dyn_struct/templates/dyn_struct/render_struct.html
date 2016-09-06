@@ -10,7 +10,11 @@
                             {{ field.header }}
                         </h4>
                     {% else %}
-                        {% render_struct_field field prefix field.initial %}
+                        {% if template == 'bootstrap2' %}
+                            {% render_struct_field_bootstrap2 field prefix field.initial %}
+                        {% elif template == 'bootstrap3' %}
+                            {% render_struct_field_bootstrap3 field prefix field.initial %}
+                        {% endif %}
                     {% endif %}
                 </div>
             {% endfor %}

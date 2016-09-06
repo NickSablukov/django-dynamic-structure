@@ -11,24 +11,29 @@ from dyn_struct.db import models
 class DynamicWidget(forms.Widget):
 
     def __init__(self, *args, **kwargs):
+        self.template = kwargs.pop('template', 'bootstrap3')
         super(DynamicWidget, self).__init__(*args, **kwargs)
         self.dynamic_structure = None
 
     def render(self, name, value, attrs=None):
         assert self.dynamic_structure is not None
 
-        template = Template('{% load dyn_struct %} {% render_struct structure prefix value %}')
+        template = Template('{% load dyn_struct %} {% render_struct structure prefix value template %}')
         context = Context({
             'structure': self.dynamic_structure,
             'prefix': name,
             'value': value,
+            'template': self.template,
         })
         return template.render(context)
 
     def value_from_datadict(self, data, files, name):
         dynamic_names = self.dynamic_structure.get_field_names()
-        value = {dynamic_name: data.get(six.u(name) + '_' + dynamic_name, None)
-                 for dynamic_name in dynamic_names if dynamic_name}
+        value = {}
+        for dynamic_name in dynamic_names:
+            if dynamic_name:
+                field_name = name + '_' + dynamic_name
+                value[dynamic_name] = data.get(field_name, None)
         return value
 
 
@@ -52,9 +57,9 @@ class DynamicField(forms.Field):
                 exception_messages.append(e.message)
 
         if exception_messages:
-            raise ValidationError('\n'.join(exception_messages))
+            raise ValidationError('\n'.join([str(msg) for msg in exception_messages]))
 
-        return json.dumps(cleaned_data, indent=4)
+        return json.dumps(cleaned_data, indent=4, ensure_ascii=False)
 
 
 class DynamicStructureForm(forms.ModelForm):
@@ -62,5 +67,10 @@ class DynamicStructureForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         dynamic_structure = kwargs.pop('dynamic_structure')
+        dynamic_template = kwargs.pop('dynamic_template', None)
+
         super(DynamicStructureForm, self).__init__(*args, **kwargs)
+
         self.fields['data'].widget.dynamic_structure = dynamic_structure
+        if dynamic_template:
+            self.fields['data'].widget.template = dynamic_template
