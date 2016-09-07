@@ -14,27 +14,43 @@ class DynamicWidget(forms.Widget):
         self.template = kwargs.pop('template', 'bootstrap3')
         super(DynamicWidget, self).__init__(*args, **kwargs)
         self.dynamic_structure = None
+        self.inner_form = None
 
     def render(self, name, value, attrs=None):
         assert self.dynamic_structure is not None
+
+        if value and isinstance(value, six.string_types):
+            value = json.loads(value)
+
+        data = None
+        if value:
+            data = {}
+            for key in value.keys():
+                inner_key = name + '-' + key
+                data[inner_key] = value[key]
 
         template = Template('{% load dyn_struct %} {% render_struct structure prefix value template %}')
         context = Context({
             'structure': self.dynamic_structure,
             'prefix': name,
-            'value': value,
+            'value': data,
             'template': self.template,
         })
         return template.render(context)
 
     def value_from_datadict(self, data, files, name):
-        dynamic_names = self.dynamic_structure.get_field_names()
+        assert self.dynamic_structure is not None
+
+        self._build_inner_form(prefix=name, data=data)
         value = {}
-        for dynamic_name in dynamic_names:
-            if dynamic_name:
-                field_name = name + '_' + dynamic_name
-                value[dynamic_name] = data.get(field_name, None)
+        for field_name in self.inner_form.fields.keys():
+            name_with_prefix = name + '-' + field_name
+            field_widget = self.inner_form.fields[field_name].widget
+            value[field_name] = field_widget.value_from_datadict(data=data, files=files, name=name_with_prefix)
         return value
+
+    def _build_inner_form(self, prefix, data):
+        self.inner_form = self.dynamic_structure.build_form(data=data, prefix=prefix)
 
 
 class DynamicField(forms.Field):
@@ -43,21 +59,12 @@ class DynamicField(forms.Field):
     def clean(self, data, initial=None):
         json_data = json.dumps(data)
         cleaned_data = json.loads(super(DynamicField, self).clean(json_data))
-        field_names = cleaned_data.keys()
 
-        fields = models.DynamicStructureField.objects.filter(structure=self.widget.dynamic_structure)
-
-        exception_messages = []
-        for name in field_names:
-            field = fields.get(name=name)
-            django_field = field.build()
-            try:
-                django_field.clean(cleaned_data[name])
-            except ValidationError as e:
-                exception_messages.append(e.message)
-
-        if exception_messages:
-            raise ValidationError('\n'.join([str(msg) for msg in exception_messages]))
+        if not self.widget.inner_form.is_valid():
+            msg = ''
+            for field_name, errors in self.widget.inner_form.errors.items():
+                msg += field_name + ': ' + ', '.join(errors) + '\n'
+            raise ValidationError(msg)
 
         return json.dumps(cleaned_data, indent=4, ensure_ascii=False)
 

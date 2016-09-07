@@ -6,6 +6,7 @@ from django import forms
 from dyn_struct import datatools
 from dyn_struct.db import fields
 from dyn_struct.exceptions import CheckClassArgumentsException
+from swutils.string import transliterate
 
 
 class DynamicStructure(models.Model):
@@ -24,12 +25,24 @@ class DynamicStructure(models.Model):
     def get_field_names(self):
         return list(self.fields.values_list('name', flat=True))
 
-    def get_rows(self):
+    def get_rows(self, form):
         table = []
         for row_number in self.fields.values_list('row', flat=True).order_by('row').distinct():
-            row = self.fields.filter(row=row_number).order_by('position')
+            row = []
+            for field in self.fields.filter(row=row_number).order_by('position'):
+                if not field.is_header():
+                    field_name = field.get_transliterate_name()
+                    field.bound_field = form[field_name]
+                row.append(field)
             table.append(row)
         return table
+
+    def build_form(self, data=None, prefix='data'):
+        form = forms.Form(data, prefix=prefix)
+        for field in self.fields.exclude(name=''):
+            field_name = field.get_transliterate_name()
+            form.fields[field_name] = field.build()
+        return form
 
 
 class DynamicStructureField(models.Model):
@@ -60,19 +73,25 @@ class DynamicStructureField(models.Model):
         ordering = ('row', 'position')
 
     def __str__(self):
-        if self.header:
+        if self.is_header():
             return self.header
         else:
             return self.name
 
     def __unicode__(self):
-        if self.header:
+        if self.is_header():
             return self.header
         else:
             return self.name
 
+    def get_transliterate_name(self):
+        return transliterate(self.name, space='_').replace("'", "")
+
+    def is_header(self):
+        return bool(self.header)
+
     def clean(self):
-        if self.header:
+        if self.is_header():
             if self.name or self.form_field or self.widget:
                 raise forms.ValidationError('Если указывается заголовок, то поля '
                                             '"Название", "Поле" и "Виджет" '
@@ -128,3 +147,4 @@ class DynamicStructureField(models.Model):
         widget_class = getattr(forms.widgets, self.widget)
         kwargs = json.loads(self.widget_kwargs)
         datatools.check_class_arguments(widget_class, kwargs)
+

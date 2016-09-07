@@ -5,15 +5,16 @@
         <div class="row">
             {% for field in row %}
                 <div class="{{ field.classes }}">
-                    {% if field.header %}
+                    {% if field.is_header %}
                         <h4>
                             {{ field.header }}
                         </h4>
                     {% else %}
                         {% if template == 'bootstrap2' %}
-                            {% render_struct_field_bootstrap2 field prefix field.initial %}
+                            {% include 'dyn_struct/render_struct_field_bootstrap2.html' with item=field.bound_field %}
+
                         {% elif template == 'bootstrap3' %}
-                            {% render_struct_field_bootstrap3 field prefix field.initial %}
+                            {% include 'dyn_struct/render_struct_field_bootstrap3.html' with item=field.bound_field %}
                         {% endif %}
                     {% endif %}
                 </div>

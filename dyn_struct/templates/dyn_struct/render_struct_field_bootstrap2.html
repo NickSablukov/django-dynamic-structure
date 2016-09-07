@@ -1,9 +1,16 @@
 <div class="control-group {% if item.errors %}error{% endif %}">
-    <label class="control-label {% if item.required %}required{% endif %}" for="id_{{ name }}">
+    <label class="control-label {% if item.field.required %}required{% endif %}" for="id_{{ name }}">
         {{ item.label }}
     </label>
     <div class="controls">
-        {{ rendered_input }}
+        {{ item }}
+
+        {% if item.errors %}
+            <div class='clearfix'></div>
+            <span class="help-inline">
+                {{ item.errors|join:', ' }}
+            </span>
+        {% endif %}
 
         {% if item.help_text %}
             <div class='clearfix'></div>
