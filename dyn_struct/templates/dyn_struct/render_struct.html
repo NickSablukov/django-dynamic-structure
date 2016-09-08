@@ -15,6 +15,9 @@
 
                         {% elif template == 'bootstrap3' %}
                             {% include 'dyn_struct/render_struct_field_bootstrap3.html' with item=field.bound_field %}
+
+                        {% else %}
+                            {% include template with item=field.bound_field %}
                         {% endif %}
                     {% endif %}
                 </div>
