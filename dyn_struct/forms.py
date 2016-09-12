@@ -73,7 +73,8 @@ class DynamicField(forms.Field):
             verbose_data.append(item)
 
         dynamic_data = {
-            'version': 1,   # TODO
+            'structure': self.widget.dynamic_structure.name,
+            'version': self.widget.dynamic_structure.version,
             'form_data': data,
             'verbose_data': verbose_data,
         }
@@ -94,11 +95,20 @@ class DynamicStructureForm(forms.ModelForm):
     data = DynamicField(label='')
 
     def __init__(self, *args, **kwargs):
-        dynamic_structure = kwargs.pop('dynamic_structure')
+        dynamic_structure_name = kwargs.pop('dynamic_structure_name')
         dynamic_template = kwargs.pop('dynamic_template', None)
 
         super(DynamicStructureForm, self).__init__(*args, **kwargs)
 
+        if self.instance and self.instance.id:
+            version = json.loads(self.instance.data)['version']
+            dynamic_structure = models.DynamicStructure.standard_objects.get(
+                version=version,
+                name=dynamic_structure_name
+            )
+        else:
+            dynamic_structure = models.DynamicStructure.objects.get(name=dynamic_structure_name)
         self.fields['data'].widget.dynamic_structure = dynamic_structure
+
         if dynamic_template:
             self.fields['data'].widget.template = dynamic_template

@@ -9,12 +9,24 @@ from dyn_struct.exceptions import CheckClassArgumentsException
 from swutils.string import transliterate
 
 
+class ExcludeDeprecatedManager(models.Manager):
+    def get_queryset(self):
+        return super(ExcludeDeprecatedManager, self).get_queryset().filter(is_deprecated=False)
+
+
 class DynamicStructure(models.Model):
-    name = models.CharField(max_length=255, verbose_name='Название', unique=True)
+    name = models.CharField(max_length=255, verbose_name='Название')
+    version = models.PositiveIntegerField(editable=False, default=1)
+    is_deprecated = models.BooleanField(editable=False, default=False)
+    created = models.DateTimeField(auto_now_add=True)
+
+    objects = ExcludeDeprecatedManager()
+    standard_objects = models.Manager()
 
     class Meta:
         verbose_name = 'динамическая структура'
         verbose_name_plural = 'динамические структуры'
+        unique_together = ('name', 'version')
 
     def __str__(self):
         return self.name
@@ -44,6 +56,27 @@ class DynamicStructure(models.Model):
             form.fields[field_name] = field.build()
         return form
 
+    def clone(self, exclude_field=None):
+        self.is_deprecated = True
+        self.save()
+
+        fields = list(self.fields.all())
+
+        self.id = None
+        self.version += 1
+        self.is_deprecated = False
+        self.save()
+
+        for field in fields:
+            if exclude_field and exclude_field.id and exclude_field.id == field.id:
+                continue
+            field.id = None
+            field.structure = self
+            field.save()
+
+    def delete(self, using=None):
+        self.is_deprecated = True
+        self.save()
 
 
 class DynamicStructureField(models.Model):
@@ -67,11 +100,13 @@ class DynamicStructureField(models.Model):
     classes = models.CharField(max_length=255, verbose_name='CSS-классы', help_text='col-md-3, custom-class ...',
                                blank=True)
 
+    created = models.DateTimeField(auto_now_add=True)
+
     class Meta:
         verbose_name = 'поле динамической структуры'
         verbose_name_plural = 'поля динамических структур'
-        unique_together = ('name', 'header')
-        ordering = ('row', 'position')
+        unique_together = ('structure', 'name', 'header')
+        ordering = ('structure__name', 'row', 'position')
 
     def __str__(self):
         if self.is_header():
