@@ -45,6 +45,7 @@ class DynamicStructure(models.Model):
         return form
 
 
+
 class DynamicStructureField(models.Model):
     FORM_FIELD_CHOICES = [(field, field) for field in datatools.get_django_fields()]
     WIDGETS_CHOICES = [(widget, widget) for widget in datatools.get_django_widgets()]

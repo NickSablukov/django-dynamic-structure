@@ -1,3 +1,4 @@
+# coding: utf-8
 import six
 import json
 
@@ -20,7 +21,7 @@ class DynamicWidget(forms.Widget):
         assert self.dynamic_structure is not None
 
         if value and isinstance(value, six.string_types):
-            value = json.loads(value)
+            value = json.loads(value)['form_data']
 
         data = None
         if value:
@@ -57,7 +58,27 @@ class DynamicField(forms.Field):
     widget = DynamicWidget
 
     def clean(self, data, initial=None):
-        json_data = json.dumps(data)
+        # удобные для отображения данные формы
+        verbose_data = []
+        for field in self.widget.dynamic_structure.fields.all():
+            item = {
+                'row': field.row,
+                'position': field.position,
+                'is_header': field.is_header(),
+                'name': field.name or field.header,
+                'value': None,
+            }
+            if not field.is_header():
+                item['value'] = data[field.get_transliterate_name()]
+            verbose_data.append(item)
+
+        dynamic_data = {
+            'version': 1,   # TODO
+            'form_data': data,
+            'verbose_data': verbose_data,
+        }
+
+        json_data = json.dumps(dynamic_data)
         cleaned_data = json.loads(super(DynamicField, self).clean(json_data))
 
         if not self.widget.inner_form.is_valid():
