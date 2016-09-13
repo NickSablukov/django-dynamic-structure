@@ -67,6 +67,7 @@ class DynamicField(forms.Field):
                 'is_header': field.is_header(),
                 'name': field.name or field.header,
                 'value': None,
+                'classes': field.classes,
             }
             if not field.is_header():
                 item['value'] = data[field.get_transliterate_name()]

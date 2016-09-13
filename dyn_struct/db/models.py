@@ -1,5 +1,6 @@
 # coding: utf-8
 import json
+import itertools
 
 from django.db import models
 from django import forms
@@ -27,6 +28,18 @@ class DynamicStructure(models.Model):
         verbose_name = 'динамическая структура'
         verbose_name_plural = 'динамические структуры'
         unique_together = ('name', 'version')
+
+    @staticmethod
+    def get_verbose(data_json):
+        data = json.loads(data_json)
+        verbose_data = data['verbose_data']
+        verbose_data.sort(key=lambda i: i['row'])
+
+        table = []
+        for i, row in itertools.groupby(verbose_data, lambda i: i['row']):
+            row = sorted(row, key=lambda i: i['position'])
+            table.append(row)
+        return table
 
     def __str__(self):
         return self.name
