@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-dynamic-structure',
-    version='0.0.8',
+    version='0.0.9',
     description='Dynamical django model structure. For example, for user customized medical specialist protocols.',
     author='Nick Sablukov',
     author_email='dessanndes@gmailcom',
@@ -13,6 +13,6 @@ setup(
     packages=find_packages(),
     license='The MIT License',
     install_requires=[
-        'django', 'six', 'swutils',
+        'django', 'six', 'sw-python-utils',
     ],
 )
