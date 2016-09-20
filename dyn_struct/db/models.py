@@ -31,11 +31,15 @@ class DynamicStructure(models.Model):
 
     @staticmethod
     def get_verbose(data_json):
+        table = []
+
+        if not data_json:
+            return table
+
         data = json.loads(data_json)
         verbose_data = data['verbose_data']
         verbose_data.sort(key=lambda i: i['row'])
 
-        table = []
         for i, row in itertools.groupby(verbose_data, lambda i: i['row']):
             row = sorted(row, key=lambda i: i['position'])
             table.append(row)
