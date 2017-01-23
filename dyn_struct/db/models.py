@@ -200,3 +200,25 @@ class DynamicStructureField(models.Model):
         kwargs = json.loads(self.widget_kwargs)
         datatools.check_class_arguments(widget_class, kwargs)
 
+
+class DynamicStructureMixin(object):
+    data_field = 'data'
+
+    def get_structure_name(self):
+        raise NotImplementedError()
+
+    def get_structure(self):
+        structure_name = self.get_structure_name()
+
+        data = getattr(self, self.data_field)
+        version = json.loads(data)['version']
+
+        structure = DynamicStructure.standard_objects.get(
+            version=version,
+            name=structure_name
+        )
+
+        return structure
+
+    def get_verbose_data(self):
+        return self.get_structure().get_verbose(self.data)
