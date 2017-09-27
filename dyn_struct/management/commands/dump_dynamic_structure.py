@@ -11,18 +11,28 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-i', '--indent', dest='indent', type=int)
         parser.add_argument('-s', '--sorted', dest='sorted', default=False, action='store_true')
+        parser.add_argument('-c', '--compact', dest='compact', default=False, action='store_true')
         parser.add_argument('-p', '--pretty', dest='pretty', default=False, action='store_true')
 
     def handle(self, *args, **options):
-        structures = models.DynamicStructure.objects.filter(is_deprecated=False)
-        structures_data = []
+        is_compact = options['compact']
 
+        structures = models.DynamicStructure.objects.all()
+        if is_compact:
+            structures = structures.filter(is_deprecated=False)
+
+        structures_data = []
         for struct in structures.iterator():
-            structures_data.append({
+            struct_info = {
                 'name': struct.name,
                 'version': struct.version,
                 'fields': self.get_fields_data(struct)
-            })
+            }
+
+            if not is_compact:
+                struct_info['is_deprecated'] = struct.is_deprecated
+
+            structures_data.append(struct_info)
 
         pretty = options['pretty']
         dump_kwargs = {
