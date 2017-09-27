@@ -12,7 +12,7 @@ class Command(BaseCommand):
         parser.add_argument('-f', '--file', dest='file', type=str)
 
     def handle(self, *args, **options):
-        print('Load ... ', end='')
+        print('Load ... ')
         with open(options['file'], 'r') as file:
             structs_data = json.loads(file.read())
 
