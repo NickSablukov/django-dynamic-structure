@@ -1,5 +1,5 @@
 from django.test import TestCase
-from dyn_struct import factories
+from dyn_struct import datatools, factories
 from dyn_struct.db.models import DynamicStructure, DynamicStructureField
 
 
@@ -61,6 +61,44 @@ class DynamicStructureTestCase(BaseModels):
         self.assertEqual(self.dyn_stuct.get_field_names(), old_dyn_stuct.get_field_names())
         self.assertEqual(self.dyn_stuct.fields.count(), count_fields_create, old_dyn_stuct.fields.count())
 
+    def test_clone_with_exclude_field(self):
+        count_fields_create = 10
+
+        DynamicStructureField.objects.all().delete()
+        self.assertFalse(DynamicStructureField.objects.all())
+        factories.DynamicStructureField.create_batch(size=count_fields_create, structure=self.dyn_stuct)
+        self.assertEqual(DynamicStructureField.objects.all().count(), count_fields_create)
+        self.assertEqual(self.dyn_stuct.fields.count(), count_fields_create)
+
+        exclude_field = self.dyn_stuct.fields.last()
+        self.dyn_stuct.clone(exclude_field=exclude_field)
+
+        self.assertEqual(DynamicStructureField.objects.all().count(), (count_fields_create * 2) - 1)
+        self.assertNotIn(exclude_field.name, self.dyn_stuct.get_field_names())
+        self.assertEqual(self.dyn_stuct.fields.count(), count_fields_create - 1)
+
+    def test_get_rows(self):
+        form = self.dyn_stuct.build_form()
+        rows = self.dyn_stuct.get_rows(form)
+
+    def test_build_form_without_data(self):
+        form = self.dyn_stuct.build_form()
+        for field_name in self.dyn_stuct.get_field_names():
+            self.assertIn(field_name, form.fields)
+        self.assertEqual(self.dyn_stuct.fields.count(), len(form.fields))
+
+    def test_build_form_exclude_field(self):
+        field = self.dyn_stuct.fields.last()
+        field.name = ''
+        field.save()
+        form = self.dyn_stuct.build_form()
+        self.assertNotIn(field.name, form.fields)
+
+    def test_build_form_with_data(self):
+        field = self.dyn_stuct.fields.last()
+        data = {field.name: 'test_data'}
+        form = self.dyn_stuct.build_form(data)
+        self.assertEqual(data, form.data)
 
     def test_delete(self):
         self.dyn_stuct.is_deprecated = False
