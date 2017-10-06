@@ -1,3 +1,5 @@
+import json
+
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from dyn_struct import datatools, factories
@@ -102,5 +104,27 @@ class DynamicStructureFieldTestCase(BaseModels):
         self.assertIn('Необходимо указать поле', ex.exception)
         self.assertEqual('invalid', ex.exception.code)
 
+    def test_build_without_label(self):
+        self.field_struct.form_kwargs = ''
+        self.field_struct.save()
+        field = self.field_struct.build()
+        self.assertEqual(field.label, self.field_struct.name)
+
+    def test_build_with_label(self):
+        label = 'test_label'
+        self.field_struct.form_kwargs = json.dumps({'label': label})
+        self.field_struct.save()
+        field = self.field_struct.build()
+        self.assertEqual(field.label, label)
+
+    def test_build_with_widget(self):
+        class_name = {'class': 'test_class'}
+        self.field_struct.widget = 'TextInput'
+        self.field_struct.widget_kwargs = json.dumps({'attrs': class_name})
+        self.field_struct.save()
+        field = self.field_struct.build()
+        self.assertEqual(field.widget.attrs, class_name)
+
     def test_build(self):
-        self.field_struct.build()
+        field = self.field_struct.build()
+        self.assertEqual(field.name, self.field_struct.name)
