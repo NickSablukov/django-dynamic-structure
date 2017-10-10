@@ -2,8 +2,7 @@ import json
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from dyn_struct import datatools, factories
-from dyn_struct.db.models import DynamicStructure, DynamicStructureField
+from dyn_struct import factories
 
 
 class BaseModels(TestCase):
@@ -92,6 +91,29 @@ class DynamicStructureFieldTestCase(BaseModels):
         with self.assertRaises(ValidationError) as ex:
             self.field_struct.clean()
         self.assertIn('Необходимо указать название', ex.exception)
+        self.assertEqual('invalid', ex.exception.code)
+
+    def test_clean_with_check_field_arguments_exception(self):
+        self.field_struct.header = ''
+        self.field_struct.name = 'test'
+        self.field_struct.form_field = 'TextInput'
+        self.field_struct.form_kwargs = {'label': 'test_label'}
+        self.field_struct.save()
+        with self.assertRaises(ValidationError) as ex:
+            self.field_struct.clean()
+        self.assertIn("Не удалось создать поле формы (the JSON object must be str, not 'dict')", ex.exception)
+        self.assertEqual('invalid', ex.exception.code)
+
+    def test_clean_with_check_widget_arguments_exception(self):
+        self.field_struct.header = ''
+        self.field_struct.name = 'test'
+        self.field_struct.form_field = 'TextInput'
+        self.field_struct.widget = 'TestField'
+        self.field_struct.save()
+        with self.assertRaises(ValidationError) as ex:
+            self.field_struct.clean()
+        self.assertIn("Не удалось создать поле формы (module 'django.forms.widgets' "
+                      "has no attribute '{}')".format(self.field_struct.widget), ex.exception)
         self.assertEqual('invalid', ex.exception.code)
 
     def test_clean_is_header_false_without_form_field(self):
