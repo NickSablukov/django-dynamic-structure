@@ -1,5 +1,18 @@
 {% load dyn_struct %}
 
+<style type="text/css">
+    ul.radio, ul.checkbox {
+      list-style-type: none;
+      padding-left:15px;
+      
+    }
+    .dynamic_structure .form-group .radio input, .dynamic_structure .form-group .checkbox input {
+      width: 15px;
+      height: 15px;
+      
+    }
+</style>
+
 <div class="dynamic_structure">
     {% for row in rows %}
         <div class="row">
