@@ -1,5 +1,6 @@
 import json
 
+import django
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from dyn_struct import factories
@@ -140,13 +141,32 @@ class DynamicStructureFieldTestCase(BaseModels):
         self.assertEqual(field.label, label)
 
     def test_build_with_widget(self):
-        class_name = {'class': 'test_class'}
+        attrs_widget = {'class': 'test_class'}
         self.field_struct.widget = 'TextInput'
-        self.field_struct.widget_kwargs = json.dumps({'attrs': class_name})
+        self.field_struct.widget_kwargs = json.dumps({'attrs': attrs_widget})
         self.field_struct.save()
         field = self.field_struct.build()
-        self.assertEqual(field.widget.attrs, class_name)
+        self.assertEqual(field.widget.attrs, attrs_widget)
 
-    def test_build(self):
+    def test_build_check_type_field(self):
+        self.field_struct.form_field = 'CharField'
+        self.field_struct.save()
         field = self.field_struct.build()
         self.assertEqual(field.name, self.field_struct.name)
+        self.assertIsInstance(field, django.forms.fields.CharField)
+        self.assertIsInstance(field.widget, django.forms.fields.TextInput)
+
+        self.field_struct.form_field = 'DateField'
+        self.field_struct.save()
+        field = self.field_struct.build()
+        self.assertIsInstance(field, django.forms.fields.DateField)
+        self.assertIsInstance(field.widget, django.forms.fields.DateInput)
+
+    def test_build_check_type_widget(self):
+        self.field_struct.form_field = 'CharField'
+        self.field_struct.widget = 'EmailInput'
+        self.field_struct.save()
+        field = self.field_struct.build()
+        self.assertEqual(field.name, self.field_struct.name)
+        self.assertIsInstance(field.widget, django.forms.widgets.EmailInput)
+        self.assertNotIsInstance(field.widget, django.forms.widgets.TextInput)
