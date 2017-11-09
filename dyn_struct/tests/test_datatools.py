@@ -2,6 +2,7 @@ from django import forms
 from django.test import TestCase
 
 import dyn_struct.datatools
+from dyn_struct.exceptions import CheckClassArgumentsException
 
 
 class DatatoolsTest(TestCase):
@@ -35,3 +36,25 @@ class DatatoolsTest(TestCase):
         base_classes = dyn_struct.datatools.get_all_bases_classes(class_obj, [base_class])
         self.assertNotIn(class_obj, base_classes)
         self.assertIn(base_class, base_classes)
+
+    def test_check_class_arguments_without_error(self):
+        class_obj = getattr(forms.fields, 'EmailField')
+        self.assertIsNone(dyn_struct.datatools.check_class_arguments(class_obj, {}))
+        self.assertIsNone(dyn_struct.datatools.check_class_arguments(class_obj, {'label': 'test_label_email'}))
+
+    def test_check_class_arguments_with_one_error_key(self):
+        error_key = 'error_key'
+        class_obj = getattr(forms.fields, 'EmailField')
+        with self.assertRaises(CheckClassArgumentsException) as ex:
+            dyn_struct.datatools.check_class_arguments(class_obj, {error_key: 'test_error'})
+        self.assertIn('{0} - неизвестные ключи для {1}. Выбирайте необходимые из'.format(error_key,class_obj),
+        str(ex.exception))
+
+    def test_check_class_arguments_with_error_keys(self):
+        error_key1 = 'error_key1'
+        error_key2 = 'error_key2'
+        class_obj = getattr(forms.fields, 'EmailField')
+        with self.assertRaises(CheckClassArgumentsException) as ex:
+            dyn_struct.datatools.check_class_arguments(class_obj, {error_key1: 'test_error', error_key2: 'test_error2'})
+        self.assertIn(error_key1, str(ex.exception))
+        self.assertIn(error_key2, str(ex.exception))
