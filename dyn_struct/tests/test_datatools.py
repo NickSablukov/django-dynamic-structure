@@ -48,7 +48,7 @@ class DatatoolsTest(TestCase):
         with self.assertRaises(CheckClassArgumentsException) as ex:
             dyn_struct.datatools.check_class_arguments(class_obj, {error_key: 'test_error'})
         self.assertIn('{0} - неизвестные ключи для {1}. Выбирайте необходимые из'.format(error_key,class_obj),
-        str(ex.exception))
+                      str(ex.exception))
 
     def test_check_class_arguments_with_error_keys(self):
         error_key1 = 'error_key1'
