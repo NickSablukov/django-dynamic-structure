@@ -9,6 +9,8 @@ admin.site.register(models.DynamicStructure)
 class DynamicStructureField(admin.ModelAdmin):
     list_display = ('structure', 'name', 'header', 'form_field', 'widget', 'row', 'position')
     list_display_links = ('name', 'header')
+    list_filter = ('structure', )
+    search_fields = ('structure__name', 'name', 'header')
 
     def get_queryset(self, request):
         qs = super(DynamicStructureField, self).get_queryset(request)
