@@ -101,7 +101,8 @@ class DynamicStructureField(models.Model):
     FORM_FIELD_CHOICES = [(field, field) for field in datatools.get_django_fields()]
     WIDGETS_CHOICES = [(widget, widget) for widget in datatools.get_django_widgets()]
 
-    structure = models.ForeignKey(DynamicStructure, verbose_name='Структура', related_name='fields')
+    structure = models.ForeignKey(DynamicStructure, verbose_name='Структура', related_name='fields',
+                                  on_delete=models.PROTECT)
     header = models.CharField(max_length=100, verbose_name='заголовок', blank=True,
                               help_text='при заполнении этого поля, вместо поля формы будет выводить заголовок')
     name = models.CharField(max_length=100, verbose_name='Название', blank=True)
