@@ -17,7 +17,7 @@ class DynamicWidget(forms.Widget):
         self.dynamic_structure = None
         self.inner_form = None
 
-    def render(self, name, value, attrs=None, render=None):
+    def render(self, name, value, attrs=None, renderer=None):
         assert self.dynamic_structure is not None
 
         if value and isinstance(value, six.string_types):
