@@ -2,6 +2,7 @@ import json
 
 from django.core.management.base import BaseCommand
 
+from dyn_struct.datatools import structure_to_dict
 from dyn_struct.db import models
 
 
@@ -21,19 +22,7 @@ class Command(BaseCommand):
         if is_compact:
             structures = structures.filter(is_deprecated=False)
 
-        structures_data = []
-        for struct in structures.iterator():
-            struct_info = {
-                'name': struct.name,
-                'version': struct.version,
-                'fields': self.get_fields_data(struct)
-            }
-
-            if not is_compact:
-                struct_info['is_deprecated'] = struct.is_deprecated
-
-            structures_data.append(struct_info)
-
+        structures_data = [structure_to_dict(struct, is_compact=is_compact) for struct in structures.iterator()]
         pretty = options['pretty']
         dump_kwargs = {
             'sort_keys': options['sorted']
@@ -49,20 +38,3 @@ class Command(BaseCommand):
             dumped_data = dumped_data.encode('utf-8').decode('utf-8')
 
         print(dumped_data)
-
-    def get_fields_data(self, struct):
-        fields_data = []
-        for field in struct.fields.all():
-            fields_data.append({
-                'header': field.header,
-                'name': field.name,
-                'form_field': field.form_field,
-                'form_kwargs': field.form_kwargs,
-                'widget': field.widget,
-                'widget_kwargs': field.widget_kwargs,
-                'row': field.row,
-                'position': field.position,
-                'classes': field.classes,
-            })
-
-        return fields_data

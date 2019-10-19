@@ -2,7 +2,7 @@ import json
 
 from django.core.management.base import BaseCommand
 
-from dyn_struct.db import models
+from dyn_struct.datatools import structure_from_dict
 
 
 class Command(BaseCommand):
@@ -17,20 +17,6 @@ class Command(BaseCommand):
             structs_data = json.loads(file.read())
 
         for struct_info in structs_data:
-            version = struct_info.get('version', 1)
-            name = struct_info.get('name')
-
-            struct, _, = models.DynamicStructure.objects.get_or_create(
-                name=name,
-                version=version,
-                is_deprecated=struct_info.get('is_deprecated', False)
-            )
-
-            for field_info in struct_info['fields']:
-                models.DynamicStructureField.objects.get_or_create(
-                    structure=struct, **field_info
-                )
-
-            models.DynamicStructure.objects.filter(name=name, version__lt=version).update(is_deprecated=True)
+            structure_from_dict(struct_info)
 
         print('Success!')

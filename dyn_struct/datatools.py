@@ -2,6 +2,7 @@
 
 import django.forms
 from dyn_struct.exceptions import CheckClassArgumentsException
+from dyn_struct.db import models
 
 
 def get_django_fields():
@@ -45,3 +46,52 @@ def check_class_arguments(cls, kwargs):
                 cls
             )
         )
+
+
+def structure_to_dict(struct: models.DynamicStructure, is_compact):
+    struct_info = {
+        'name': struct.name,
+        'version': struct.version,
+        'fields': get_structure_fields_data(struct=struct)
+    }
+
+    if not is_compact:
+        struct_info['is_deprecated'] = struct.is_deprecated
+    return struct_info
+
+
+def structure_from_dict(struct_info: dict):
+    version = struct_info.get('version', 1)
+    name = struct_info.get('name')
+
+    struct, _, = models.DynamicStructure.objects.get_or_create(
+        name=name,
+        version=version,
+        is_deprecated=struct_info.get('is_deprecated', False)
+    )
+
+    for field_info in struct_info['fields']:
+        models.DynamicStructureField.objects.get_or_create(
+            structure=struct, **field_info
+        )
+
+    models.DynamicStructure.objects.filter(name=name, version__lt=version).update(is_deprecated=True)
+    return struct
+
+
+def get_structure_fields_data(struct):
+    fields_data = []
+    for field in struct.fields.all():
+        fields_data.append({
+            'header': field.header,
+            'name': field.name,
+            'form_field': field.form_field,
+            'form_kwargs': field.form_kwargs,
+            'widget': field.widget,
+            'widget_kwargs': field.widget_kwargs,
+            'row': field.row,
+            'position': field.position,
+            'classes': field.classes,
+        })
+
+    return fields_data
