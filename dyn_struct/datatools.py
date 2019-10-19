@@ -48,7 +48,7 @@ def check_class_arguments(cls, kwargs):
         )
 
 
-def structure_to_dict(struct: models.DynamicStructure, is_compact):
+def structure_to_dict(struct, is_compact):
     struct_info = {
         'name': struct.name,
         'version': struct.version,
@@ -60,7 +60,7 @@ def structure_to_dict(struct: models.DynamicStructure, is_compact):
     return struct_info
 
 
-def structure_from_dict(struct_info: dict):
+def structure_from_dict(struct_info):
     version = struct_info.get('version', 1)
     name = struct_info.get('name')
 
