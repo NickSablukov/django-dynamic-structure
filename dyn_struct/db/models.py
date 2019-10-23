@@ -28,7 +28,7 @@ class DynamicStructure(models.Model):
         verbose_name = 'динамическая структура'
         verbose_name_plural = 'динамические структуры'
         unique_together = ('name', 'version')
-        ordering = ('name', )
+        ordering = ('name', '-version')
 
     @staticmethod
     def get_verbose(data_json):

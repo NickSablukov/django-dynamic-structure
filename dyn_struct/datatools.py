@@ -60,22 +60,36 @@ def structure_to_dict(struct, is_compact):
     return struct_info
 
 
-def structure_from_dict(struct_info):
-    version = struct_info.get('version', 1)
-    name = struct_info.get('name')
+def structure_from_dict(struct_info, use_local_version=False, struct_name=None):
+    """
+    Получение (создание) структуры из словаря
+    :param struct_info: словарь с параметрами структуры
+    :param use_local_version: нужно ли использовать локальное версионирование (т.е. не брать в расчет версию из файла)
+    :param struct_name: название структуры (по-умолчанию берется из файла)
+    :return:
+    """
+    name = struct_name or struct_info.get('name')
 
-    struct, _, = models.DynamicStructure.objects.get_or_create(
-        name=name,
-        version=version,
-        is_deprecated=struct_info.get('is_deprecated', False)
-    )
+    if use_local_version:
+        struct, created = models.DynamicStructure.objects.get_or_create(name=name)
+
+        if not created:
+            struct.version += 1
+            struct.save()
+    else:
+        version = struct_info.get('version', 1)
+        struct, _, = models.DynamicStructure.objects.get_or_create(
+            name=name,
+            version=version,
+            is_deprecated=struct_info.get('is_deprecated', False)
+        )
 
     for field_info in struct_info['fields']:
         models.DynamicStructureField.objects.get_or_create(
             structure=struct, **field_info
         )
 
-    models.DynamicStructure.objects.filter(name=name, version__lt=version).update(is_deprecated=True)
+    models.DynamicStructure.objects.filter(name=name, version__lt=struct.version).update(is_deprecated=True)
     return struct
 
 
