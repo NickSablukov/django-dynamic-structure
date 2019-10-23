@@ -74,8 +74,8 @@ def structure_from_dict(struct_info, use_local_version=False, struct_name=None):
         struct, created = models.DynamicStructure.objects.get_or_create(name=name)
 
         if not created:
-            struct.version += 1
-            struct.save()
+            struct.clone()
+            struct = models.DynamicStructure.objects.get(name=name)
     else:
         version = struct_info.get('version', 1)
         struct, _, = models.DynamicStructure.objects.get_or_create(
