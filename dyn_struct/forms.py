@@ -102,7 +102,10 @@ class DynamicStructureForm(forms.ModelForm):
         super(DynamicStructureForm, self).__init__(*args, **kwargs)
 
         if self.instance and self.instance.id and self.instance.data:
-            version = json.loads(self.instance.data)['version']
+            data = json.loads(self.instance.data)
+            dynamic_structure_name = data['structure']
+            version = data['version']
+
             dynamic_structure = models.DynamicStructure.standard_objects.get(
                 version=version,
                 name=dynamic_structure_name
