@@ -16,7 +16,6 @@ class Command(BaseCommand):
         with open(options['file'], 'r') as file:
             structs_data = json.loads(file.read())
 
-        for struct_info in structs_data:
-            structure_from_dict(struct_info)
+        structure_from_dict(structs_data)
 
         print('Success!')

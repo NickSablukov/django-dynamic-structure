@@ -2,7 +2,6 @@
 
 import django.forms
 from dyn_struct.exceptions import CheckClassArgumentsException
-from dyn_struct.db import models
 
 
 def get_django_fields():
@@ -48,7 +47,7 @@ def check_class_arguments(cls, kwargs):
         )
 
 
-def structure_to_dict(struct, is_compact):
+def structure_to_dict(struct, is_compact=True):
     struct_info = {
         'name': struct.name,
         'version': struct.version,
@@ -68,6 +67,8 @@ def structure_from_dict(struct_info, use_local_version=False, struct_name=None):
     :param struct_name: название структуры (по-умолчанию берется из файла)
     :return:
     """
+    from dyn_struct.db import models
+
     name = struct_name or struct_info.get('name')
 
     if use_local_version:
