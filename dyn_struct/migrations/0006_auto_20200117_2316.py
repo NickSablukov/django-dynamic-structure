@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dyn_struct', '0006_auto_20200117_1750'),
+        ('dyn_struct', '0005_auto_20160913_1041'),
     ]
 
     operations = [
