@@ -105,7 +105,7 @@ class DynamicStructureField(models.Model):
                                   on_delete=models.PROTECT)
     header = models.CharField(max_length=100, verbose_name='заголовок', blank=True,
                               help_text='при заполнении этого поля, вместо поля формы будет выводить заголовок')
-    name = models.CharField(max_length=100, verbose_name='Название', blank=True)
+    name = models.CharField(max_length=512, verbose_name='Название', blank=True)
 
     form_field = models.CharField(max_length=255, choices=FORM_FIELD_CHOICES, verbose_name='Поле', blank=True)
     form_kwargs = fields.ParamsField(verbose_name='Параметры поля', default='{}')
