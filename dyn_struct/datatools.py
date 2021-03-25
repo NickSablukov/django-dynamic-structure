@@ -86,9 +86,13 @@ def structure_from_dict(struct_info, use_local_version=False, struct_name=None):
         )
 
     for field_info in struct_info['fields']:
-        models.DynamicStructureField.objects.get_or_create(
-            structure=struct, **field_info
+        struct_field, created = struct.fields.get_or_create(
+            name=field_info['name'],
+            header=field_info['header'],
+            defaults=field_info
         )
+        if not created:
+            struct.fields.filter(id=struct_field.id).update(**field_info)
 
     models.DynamicStructure.objects.filter(name=name, version__lt=struct.version).update(is_deprecated=True)
     return struct
