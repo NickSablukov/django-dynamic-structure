@@ -114,3 +114,35 @@ def get_structure_fields_data(struct):
         })
 
     return fields_data
+
+
+def get_structure_initial(struct, prefix=None):
+    """ Параметры по-умолчанию для формы на основе настроек """
+    initial = {}
+
+    for field_name, field in struct.build_form().fields.items():
+        if prefix:
+            field_name = prefix + '-' + field_name
+
+        if isinstance(field, (django.forms.MultipleChoiceField,)):
+            if not field.initial:
+                initial[field_name] = []
+            elif isinstance(field.initial, list):
+                initial[field_name] = field.initial
+            else:
+                initial[field_name] = [field.initial]
+        else:
+            initial[field_name] = field.initial
+
+    return initial
+
+
+def get_structure_initial_data(struct, prefix=None):
+    """ Получение значения параметра data, которое записывается в объект """
+    initial = get_structure_initial(struct, prefix)
+
+    form = struct.build_form(data=initial, prefix=prefix)
+    if form.is_valid():
+        return form.clean()
+    else:
+        raise Exception('Ошибка формы - ', form.errors)
