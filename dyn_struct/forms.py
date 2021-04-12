@@ -6,6 +6,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.template import Template, Context
 
+from dyn_struct.datatools import get_structure_data
 from dyn_struct.db import models
 
 
@@ -59,28 +60,7 @@ class DynamicField(forms.Field):
 
     def clean(self, data, initial=None):
         # удобные для отображения данные формы
-        verbose_data = []
-        for field in self.widget.dynamic_structure.fields.all():
-            item = {
-                'row': field.row,
-                'position': field.position,
-                'is_header': field.is_header(),
-                'name': field.name or field.header,
-                'value': None,
-                'classes': field.classes,
-            }
-            if not field.is_header():
-                item['value'] = data[field.get_transliterate_name()]
-            verbose_data.append(item)
-
-        dynamic_data = {
-            'structure': self.widget.dynamic_structure.name,
-            'version': self.widget.dynamic_structure.version,
-            'form_data': data,
-            'verbose_data': verbose_data,
-        }
-
-        json_data = json.dumps(dynamic_data)
+        json_data = get_structure_data(struct=self.widget.dynamic_structure, data=data)
         cleaned_data = json.loads(super(DynamicField, self).clean(json_data))
 
         if not self.widget.inner_form.is_valid():

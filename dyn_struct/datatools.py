@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import json
 import django.forms
 from dyn_struct.exceptions import CheckClassArgumentsException
 
@@ -140,9 +141,30 @@ def get_structure_initial(struct, prefix=None):
 def get_structure_initial_data(struct, prefix=None):
     """ Получение значения параметра data, которое записывается в объект """
     initial = get_structure_initial(struct, prefix)
+    return get_structure_data(struct, initial)
 
-    form = struct.build_form(data=initial, prefix=prefix)
-    if form.is_valid():
-        return form.clean()
-    else:
-        raise Exception('Ошибка формы - ', form.errors)
+
+def get_structure_data(struct, data):
+    # удобные для отображения данные формы
+    verbose_data = []
+    for field in struct.fields.all():
+        item = {
+            'row': field.row,
+            'position': field.position,
+            'is_header': field.is_header(),
+            'name': field.name or field.header,
+            'value': None,
+            'classes': field.classes,
+        }
+        if not field.is_header():
+            item['value'] = data[field.get_transliterate_name()]
+        verbose_data.append(item)
+
+    dynamic_data = {
+        'structure': struct.name,
+        'version': struct.version,
+        'form_data': data,
+        'verbose_data': verbose_data,
+    }
+
+    return json.dumps(dynamic_data, indent=4, ensure_ascii=False)
