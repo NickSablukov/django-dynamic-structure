@@ -14,6 +14,6 @@ setup(
     package_data={'dyn_struct': ['templates/dyn_struct/*.html']},
     license='The MIT License',
     install_requires=[
-        'django', 'six', 'sw-python-utils',
+        'django', 'six', 'sw-python-utils', 'sw-django-utils'
     ],
 )

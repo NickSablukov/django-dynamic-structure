@@ -2,6 +2,7 @@
 
 import json
 import django.forms
+from djutils.forms import transform_form_error
 from dyn_struct.exceptions import CheckClassArgumentsException
 
 
@@ -138,13 +139,13 @@ def get_structure_initial(struct, prefix=None):
     return initial
 
 
-def get_structure_initial_data(struct, prefix=None):
+def get_structure_initial_data(struct, prefix=None, validate=True):
     """ Получение значения параметра data, которое записывается в объект """
     initial = get_structure_initial(struct, prefix)
-    return get_structure_data(struct, initial)
+    return get_structure_data(struct, initial, validate)
 
 
-def get_structure_data(struct, data):
+def get_structure_data(struct, data, validate=True):
     # удобные для отображения данные формы
     verbose_data = []
     for field in struct.fields.all():
@@ -159,6 +160,12 @@ def get_structure_data(struct, data):
         if not field.is_header():
             item['value'] = data[field.get_transliterate_name()]
         verbose_data.append(item)
+
+    # проверим, что переданные данные являются валидными для данной формы
+    struct_form = struct.build_form(data=data, prefix=None)
+    if validate and not struct_form.is_valid():
+        form_errors = transform_form_error(struct_form)
+        raise django.forms.ValidationError(', '.join(form_errors))
 
     dynamic_data = {
         'structure': struct.name,
