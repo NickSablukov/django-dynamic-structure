@@ -1,6 +1,8 @@
 # coding: utf-8
 
+import json
 import django.forms
+from djutils.forms import transform_form_error
 from dyn_struct.exceptions import CheckClassArgumentsException
 
 
@@ -114,3 +116,62 @@ def get_structure_fields_data(struct):
         })
 
     return fields_data
+
+
+def get_structure_initial(struct, prefix=None):
+    """ Параметры по-умолчанию для формы на основе настроек """
+    initial = {}
+
+    for field_name, field in struct.build_form().fields.items():
+        if prefix:
+            field_name = prefix + '-' + field_name
+
+        if isinstance(field, (django.forms.MultipleChoiceField,)):
+            if not field.initial:
+                initial[field_name] = []
+            elif isinstance(field.initial, list):
+                initial[field_name] = field.initial
+            else:
+                initial[field_name] = [field.initial]
+        else:
+            initial[field_name] = field.initial
+
+    return initial
+
+
+def get_structure_initial_data(struct, prefix=None, validate=True):
+    """ Получение значения параметра data, которое записывается в объект """
+    initial = get_structure_initial(struct, prefix)
+    return get_structure_data(struct, initial, validate)
+
+
+def get_structure_data(struct, data, validate=True):
+    # удобные для отображения данные формы
+    verbose_data = []
+    for field in struct.fields.all():
+        item = {
+            'row': field.row,
+            'position': field.position,
+            'is_header': field.is_header(),
+            'name': field.name or field.header,
+            'value': None,
+            'classes': field.classes,
+        }
+        if not field.is_header():
+            item['value'] = data[field.get_transliterate_name()]
+        verbose_data.append(item)
+
+    # проверим, что переданные данные являются валидными для данной формы
+    struct_form = struct.build_form(data=data, prefix=None)
+    if validate and not struct_form.is_valid():
+        form_errors = transform_form_error(struct_form)
+        raise django.forms.ValidationError(', '.join(form_errors))
+
+    dynamic_data = {
+        'structure': struct.name,
+        'version': struct.version,
+        'form_data': data,
+        'verbose_data': verbose_data,
+    }
+
+    return json.dumps(dynamic_data, indent=4, ensure_ascii=False)
