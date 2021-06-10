@@ -139,7 +139,8 @@ class DynamicStructureField(models.Model):
             return self.name
 
     def get_transliterate_name(self):
-        return transliterate(self.name, space='_').replace("'", "")
+        name = ''.join([v for v in self.name if v.isalpha() or v.isdigit() or v.isspace()])
+        return transliterate(name, space='_')
 
     def is_header(self):
         return bool(self.header)
