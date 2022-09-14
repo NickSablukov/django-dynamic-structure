@@ -47,7 +47,7 @@ class DynamicStructure(models.Model):
             # дополним поля некоторыми свойствами для красивого отображения
             for field in row:
                 if isinstance(field.get('value'), list):
-                    display_value = ', '.join(field['value'])
+                    display_value = '; '.join(field['value'])
                 else:
                     display_value = field.get('value')
                 field['display_value'] = display_value
