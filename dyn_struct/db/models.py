@@ -43,6 +43,15 @@ class DynamicStructure(models.Model):
 
         for i, row in itertools.groupby(verbose_data, lambda i: i['row']):
             row = sorted(row, key=lambda i: i['position'])
+
+            # дополним поля некоторыми свойствами для красивого отображения
+            for field in row:
+                if isinstance(field.get('value'), list):
+                    display_value = ', '.join(field['value'])
+                else:
+                    display_value = field.get('value')
+                field['display_value'] = display_value
+
             table.append(row)
         return table
 
