@@ -9,6 +9,8 @@ from dyn_struct.db import fields
 from dyn_struct.exceptions import CheckClassArgumentsException
 from swutils.string import transliterate
 
+from dyn_struct import app_settings
+
 
 class ExcludeDeprecatedManager(models.Manager):
     def get_queryset(self):
@@ -148,7 +150,10 @@ class DynamicStructureField(models.Model):
             return self.name
 
     def get_transliterate_name(self):
-        return transliterate(self.name, space='_').replace("'", "")
+        name = transliterate(self.name, space='_')
+        for symbol in app_settings.EXCLUDE_NAME_SYMBOLS:
+            name = name.replace(symbol, "")
+        return name
 
     def is_header(self):
         return bool(self.header)
