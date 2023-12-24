@@ -3,7 +3,7 @@ import json
 
 from django.core.exceptions import ValidationError
 from django.utils.deconstruct import deconstructible
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 
 @deconstructible
@@ -13,7 +13,7 @@ class ParamsValidator(object):
     code = 'invalid'
 
     def __call__(self, value):
-        value = force_text(value)
+        value = force_str(value)
 
         try:
             dict(json.loads(value))
