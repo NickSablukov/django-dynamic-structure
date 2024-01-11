@@ -1,5 +1,4 @@
 # coding: utf-8
-import six
 import json
 
 from django import forms
@@ -21,7 +20,7 @@ class DynamicWidget(forms.Widget):
     def render(self, name, value, attrs=None, renderer=None):
         assert self.dynamic_structure is not None
 
-        if value and isinstance(value, six.string_types):
+        if value and isinstance(value, str):
             value = json.loads(value)['form_data']
 
         data = None
