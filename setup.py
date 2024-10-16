@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-dynamic-structure',
-    version='0.0.33',
+    version='0.0.34',
     description='Dynamical django model structure. For example, for user customized medical specialist protocols.',
     author='Telminov Sergey',
     author_email='sergey@telminov.ru',
