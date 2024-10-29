@@ -158,6 +158,8 @@ def get_structure_data(struct, data, validate=True):
             'classes': field.classes,
         }
         if not field.is_header():
+            form_kwargs = json.loads(field.form_kwargs)
+            item['label'] = form_kwargs.get('label') or item['name']
             item['value'] = data[field.get_transliterate_name()]
         verbose_data.append(item)
 
