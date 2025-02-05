@@ -1,5 +1,8 @@
 # coding: utf-8
-# python setup.py sdist register bdist_egg upload
+# python -m pip install certifi
+# export SSL_CERT_FILE=$(python -m certifi)
+# python setup.py sdist
+# twine upload dist/*
 from setuptools import setup, find_packages
 
 setup(
