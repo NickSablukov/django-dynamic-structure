@@ -1,6 +1,6 @@
 # coding: utf-8
-
 import json
+import base64
 import django.forms
 from djutils.forms import transform_form_error
 from dyn_struct.exceptions import CheckClassArgumentsException
@@ -148,6 +148,7 @@ def get_structure_initial_data(struct, prefix=None, validate=True):
 def get_structure_data(struct, data, validate=True):
     # удобные для отображения данные формы
     verbose_data = []
+    files = {}
     for field in struct.fields.all():
         item = {
             'row': field.row,
@@ -158,13 +159,15 @@ def get_structure_data(struct, data, validate=True):
             'classes': field.classes,
         }
         if not field.is_header():
-            form_kwargs = json.loads(field.form_kwargs)
-            item['label'] = form_kwargs.get('label') or item['name']
             item['value'] = data[field.get_transliterate_name()]
+
+        if field.widget == 'FileInput':
+            files[item['name']] = item['value']
+
         verbose_data.append(item)
 
     # проверим, что переданные данные являются валидными для данной формы
-    struct_form = struct.build_form(data=data, prefix=None)
+    struct_form = struct.build_form(data=data, files=files, prefix=None)
     if validate and not struct_form.is_valid():
         form_errors = transform_form_error(struct_form)
         raise django.forms.ValidationError(', '.join(form_errors))
@@ -175,5 +178,23 @@ def get_structure_data(struct, data, validate=True):
         'form_data': data,
         'verbose_data': verbose_data,
     }
+
+    for f_field_name, f in files.items():
+        if not f:
+            continue
+
+        content = f.read()
+        if hasattr(f, 'seek') and callable(f.seek):
+            f.seek(0)
+
+        content_base64 = base64.b64encode(content).decode()
+        if hasattr(f, 'image'):
+            content_base64 = f'data:image/{f.image.format.lower()};base64,' + content_base64
+
+        dynamic_data['form_data'][f_field_name] = content_base64
+        for verbose_item in dynamic_data['verbose_data']:
+            if verbose_item['name'] == f_field_name:
+                verbose_item['value'] = content_base64
+                break
 
     return json.dumps(dynamic_data, indent=4, ensure_ascii=False)

@@ -76,8 +76,8 @@ class DynamicStructure(models.Model):
             table.append(row)
         return table
 
-    def build_form(self, data=None, prefix='data'):
-        form = forms.Form(data, prefix=prefix)
+    def build_form(self, data=None, files=None, prefix='data'):
+        form = forms.Form(data=data, files=files, prefix=prefix)
         for field in self.fields.exclude(name=''):
             field_name = field.get_transliterate_name()
             form.fields[field_name] = field.build()

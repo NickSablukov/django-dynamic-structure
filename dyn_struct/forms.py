@@ -43,7 +43,7 @@ class DynamicWidget(forms.Widget):
     def value_from_datadict(self, data, files, name):
         assert self.dynamic_structure is not None
 
-        self._build_inner_form(prefix=name, data=data)
+        self._build_inner_form(prefix=name, data=data, files=files)
         value = {}
         for field_name in self.inner_form.fields.keys():
             name_with_prefix = name + '-' + field_name
@@ -51,8 +51,8 @@ class DynamicWidget(forms.Widget):
             value[field_name] = field_widget.value_from_datadict(data=data, files=files, name=name_with_prefix)
         return value
 
-    def _build_inner_form(self, prefix, data):
-        self.inner_form = self.dynamic_structure.build_form(data=data, prefix=prefix)
+    def _build_inner_form(self, prefix, data, files):
+        self.inner_form = self.dynamic_structure.build_form(data=data, files=files, prefix=prefix)
 
 
 class DynamicField(forms.Field):
